@@ -14,7 +14,7 @@ readme = "README.md"
 
 # Build related information
 build = false
-repository = "httpy://github.com/MooseGames/encodex.git"
+repository = "https://github.com/MooseGames/encodex.git"
 
 [features]
 dox = []
