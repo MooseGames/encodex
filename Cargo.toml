@@ -6,7 +6,7 @@ description = "Encoder and Decoder for Base64 encoding as defined in RFC 4648."
 edition = "2021"
 
 # Package information relevant for publishing the crate to crates.io
-publish = ["https://crates.io"]
+publish = ["crates-io"]
 authors = ["Fabian Moos <fabian.moos@moosegamesdev.org>"]
 homepage = "https://www.moosegamesdev.org"
 license = "LGPL-3.0-only"
