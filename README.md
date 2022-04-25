@@ -1,7 +1,8 @@
 # En-Codex
 
-An en- and decoder for Base64 data encoding as defined in RFC 4648. For information about how to use
-this program please use `cargo doc` from within your project folder.
+A command line tool for decoding and encoding of data from and to Base64, Base32 (todo) and Base16
+(todo) encodings as defined in RFC 4648. For information about how to use this program please use
+`cargo doc` from within your project folder.
 
 ---
 ###### License

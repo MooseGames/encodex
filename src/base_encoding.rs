@@ -12,17 +12,5 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::process;
-
-fn main() {
-    let settings = encodex::parse_terminal_args();
-    let settings = match settings {
-        Ok(settings) => { settings }
-        Err(error_message) => {
-            eprintln!("{}", error_message);
-            process::exit(1);
-        }
-    };
-}
 
 

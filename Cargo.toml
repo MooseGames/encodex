@@ -1,7 +1,7 @@
 [package]
 # General package information
 name = "encodex"
-version = "0.0.1"
+version = "0.1.1"
 description = "Encoder and Decoder for Base64 encoding as defined in RFC 4648."
 edition = "2021"
 
