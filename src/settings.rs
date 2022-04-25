@@ -18,7 +18,9 @@ use std::path;
 #[derive(Clone, Copy)]
 pub enum Base {
     Base64,
+    Base64url,
     Base32,
+    Base32hex,
     Base16,
 }
 

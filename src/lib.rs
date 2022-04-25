@@ -26,6 +26,7 @@ const OP_DECODE: &str = "d";
 const OP_DECODE_LONG: &str = "decode";
 const OP_FILE: &str = "f";
 const OP_FILE_LONG: &str = "file";
+const OP_VERSION_LONG: &str = "version";
 
 pub fn parse_terminal_args() -> Result<Settings, String> {
     let mut settings = Settings::new();
@@ -42,25 +43,23 @@ pub fn parse_terminal_args() -> Result<Settings, String> {
         } else if arg.len() >= 1 && "-" == &arg[0..1] {
             cmd_line_op = true;
             current_value = &arg[1..];
-        } else if arg.len() != 0 {
+        } else {
             cmd_line_op = false;
             current_value = &arg[..];
-        } else {
-            return Err(String::from(">>> Error: Encounterd empty command line argument!"));
         }
 
         match current_value {
-            "base" | "b" => {
+            OP_BASE_LONG | OP_BASE => {
                 if let Err(error_message) = handle_base_type(&mut settings, arg_it.next()) {
                     return Err(String::from(error_message));
                 }
             }
-            "decode" | "d" => { switch_encode_mode(&mut settings); }
-            "file" | "f" => {
+            OP_DECODE_LONG | OP_DECODE => { switch_encode_mode(&mut settings); }
+            OP_FILE_LONG | OP_FILE => {
                 todo!("!!! Output to file is not yet implemented! Output will be printed to stdout!!!");
             }
-            "help" | "h" => { print_help(); process::exit(0); }
-            "version" | "v" => { print_version(); process::exit(0); }
+            "help" => { print_help(); process::exit(0); }
+            OP_VERSION_LONG => { print_version(); process::exit(0); }
             "" => { switch_read_mode(&mut settings); }
             &_ if !cmd_line_op => { handle_input(&mut settings, current_value); }
             &_ => {
@@ -82,7 +81,9 @@ fn handle_base_type(settings: &mut Settings,
         Some(base_type) => {
             match &base_type[..] {
                 "Base64" => { settings.set_base(Base::Base64); Ok(()) }
+                "Base64url" => { settings.set_base(Base::Base64url); Ok(()) }
                 "Base32" => { settings.set_base(Base::Base32); Ok(()) }
+                "Base32hex" => { settings.set_base(Base::Base32hex); Ok(()) }
                 "Base16" => { settings.set_base(Base::Base16); Ok(()) }
                 &_ => { Err(">>> Error: Unrecognized base type!") }
             }
@@ -106,14 +107,16 @@ fn print_help() {
     println!("  empty will be interpreted as a file name to be encoded/decoded. '--' without any");
     println!("  suffix switches between file input and stdin.\n");
     println!("Options:");
-    println!("  -{}, --{} <base>      Set encoding to: Base64 (default), Base32, Base16",
+    println!("  -{}, --{} <base>      Set encoding to: Base64 (default, todo), Base64url(todo),",
              OP_BASE, OP_BASE_LONG);
+    println!("                         Base32(todo), Base32hex(todo), Base16(todo)");
     println!("  -{}, --{}           Decode input",
              OP_DECODE, OP_DECODE_LONG);
     println!("  -{}, --{} [<file>]    Save encoded or decoded output to file",
              OP_FILE, OP_FILE_LONG);
     println!("      --help             Print this help and exit");
-    println!("      --version          Print version and license information and exit\n");
+    println!("      --{}          Print version and license information and exit\n",
+             OP_VERSION_LONG);
     println!("The last parsed value for the -{} option determines the used base for encoding and",
              OP_BASE);
     println!(" decoding.");
@@ -125,18 +128,21 @@ fn print_version() {
     version.push_str(env!("CARGO_PKG_VERSION_MINOR"));
     version.push_str(".");
     version.push_str(env!("CARGO_PKG_VERSION_PATCH"));
-    println!("encodex {}\n\
+    let description = String::from(env!("CARGO_PKG_DESCRIPTION"));
+    println!("encodex {}  {}\n\
+              {}\n\
               Copyright (C) 2022  Fabian Moos\n\n\
               This program is free software: you can redistribute it and/or modify\n\
-              it under the terms of the GNU Lesser General Public License version 3 as\n\
-              published by the Free Software Foundation\n\n\
+              it under the terms of the GNU Lesser General Public License as\n\
+              published by the Free Software Foundation, either version 3 of the\n\
+              License, or (at your option) any later version.\n\n\
               This program is distributed in the hope that it will be useful,\n\
               but WITHOUT ANY WARRANTY; without even the implied warranty of\n\
-              MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the\n\
-              GNU Lesser General Public License version 3 for more details.\n\n\
-              You should have received a copy of the GNU Lesser General Public License\n\
-              along with this program. If not, see <https://www.gnu.org/licenses/>.",
-              version);
+              MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n\
+              GNU Lesser General Public License for more details.\n\n\
+              You should have received a copy of the GNU General Public License\n\
+              along with this program.  If not, see <https://www.gnu.org/licenses/>.",
+              version, &description[..51], &description[51..]);
 }
 
 fn switch_encode_mode(settings: &mut Settings) {
