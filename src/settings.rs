@@ -28,16 +28,9 @@ pub enum EncodeMode {
     Encode,
 }
 
-#[derive(Clone, Copy)]
-pub enum ReadMode {
-    FileName,
-    StdIn,
-}
-
 pub struct Settings {
     base: Base,
     encode_mode: EncodeMode,
-    read_mode: ReadMode,
 }
 
 impl Settings {
@@ -45,7 +38,6 @@ impl Settings {
         Settings {
             base: Base::Guess,
             encode_mode: EncodeMode::Encode,
-            read_mode: ReadMode::FileName,
         }
     }
 
@@ -53,12 +45,8 @@ impl Settings {
 
     pub fn encode_mode(&self) -> EncodeMode { self.encode_mode }
 
-    pub fn read_mode(&self) -> ReadMode { self.read_mode }
-
     pub fn set_base(&mut self, base: Base) { self.base = base; }
 
     pub fn set_encode_mode(&mut self, mode: EncodeMode) { self.encode_mode = mode; }
-
-    pub fn set_read_mode(&mut self, mode: ReadMode) { self.read_mode = mode; }
 }
  

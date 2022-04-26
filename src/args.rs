@@ -14,8 +14,8 @@
 
 use std::{env, path, process};
 
-use crate::input::Input;
-use encodex::{Base, EncodeMode, ReadMode, Settings};
+use crate::input::{Input, ReadMode};
+use encodex::{Base, EncodeMode, Settings};
 
 const OP_BASE: &str = "b";
 const OP_BASE_LONG: &str = "base";
@@ -63,9 +63,9 @@ pub fn parse_terminal_args() -> Result<(Input, Settings), String> {
             }
             "help" => { print_help(); process::exit(0); }
             OP_VERSION_LONG => { print_version(); process::exit(0); }
-            "" => { switch_read_mode(&mut settings); }
+            "" => { input.switch_read_mode(); }
             &_ if !cmd_line_op => {
-                handle_input(&mut input, current_value, &working_dir, &settings);
+                handle_input(&mut input, current_value, &working_dir);
             }
             &_ => {
                 print_help();
@@ -97,8 +97,8 @@ fn handle_base_type(settings: &mut Settings, base_type: Option<String>)
     }
 }
 
-fn handle_input(input: &mut Input, value: &str, working_dir: &path::PathBuf, settings: &Settings) {
-    match settings.read_mode() {
+fn handle_input(input: &mut Input, value: &str, working_dir: &path::PathBuf) {
+    match input.read_mode() {
         ReadMode::FileName => {
             let mut file_path = working_dir.clone();
             file_path.push(value);
@@ -160,13 +160,6 @@ fn switch_encode_mode(settings: &mut Settings) {
     match settings.encode_mode() {
         EncodeMode::Decode => { settings.set_encode_mode(EncodeMode::Encode); }
         EncodeMode::Encode => { settings.set_encode_mode(EncodeMode::Decode); }
-    }
-}
-
-fn switch_read_mode(settings: &mut Settings) {
-    match settings.read_mode() {
-        ReadMode::FileName => { settings.set_read_mode(ReadMode::StdIn); }
-        ReadMode::StdIn => { settings.set_read_mode(ReadMode::FileName); }
     }
 }
 

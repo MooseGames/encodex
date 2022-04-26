@@ -14,9 +14,16 @@
 
 use std::path;
 
+#[derive(Clone, Copy)]
+pub enum ReadMode {
+    FileName,
+    StdIn,
+}
+
 pub struct Input {
     files: Vec<path::PathBuf>,
     strings: Vec<String>,
+    read_mode: ReadMode,
 }
 
 impl Input {
@@ -24,11 +31,21 @@ impl Input {
         Input {
             files: Vec::new(),
             strings: Vec::new(),
+            read_mode: ReadMode::FileName,
         }
     }
 
     pub fn add_file(&mut self, file_path: path::PathBuf) { self.files.push(file_path); }
 
     pub fn add_string(&mut self, string: String) { self.strings.push(string); }
+
+    pub fn read_mode(&self) -> ReadMode { self.read_mode }
+
+    pub fn switch_read_mode(&mut self) {
+        match self.read_mode {
+            ReadMode::FileName => { self.read_mode = ReadMode::StdIn; }
+            ReadMode::StdIn => { self.read_mode = ReadMode::FileName; }
+        }
+    }
 }
 
