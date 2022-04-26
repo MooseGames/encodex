@@ -179,3 +179,79 @@ impl TranslationUnit {
     }
 }
 
+#[cfg(any(test, feature = "dox"))]
+mod test {
+    use super::*;
+
+    fn setup_config_for_decode_base64() -> Settings {
+        let mut config = Settings::new();
+        config.set_base(Base::Base64);
+        config.set_encode_mode(EncodeMode::Decode);
+        config
+    }
+
+    #[cfg_attr(not(feature = "dox"), test)]
+    fn test_translation_unit_decode_base64() {
+        let mut t_unit = TranslationUnit::new("".as_bytes(), setup_config_for_decode_base64());
+        let result = t_unit.translate();
+        assert_eq!(result, Ok(()));
+        assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
+                   "");
+    }
+
+    #[cfg_attr(not(feature = "dox"), test)]
+    fn test_translation_unit_decode_base64_f() {
+        let mut t_unit = TranslationUnit::new("Zg==".as_bytes(), setup_config_for_decode_base64());
+        let result = t_unit.translate();
+        assert_eq!(result, Ok(()));
+        assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
+                   "f");
+    }
+
+    #[cfg_attr(not(feature = "dox"), test)]
+    fn test_translation_unit_decode_base64_fo() {
+        let mut t_unit = TranslationUnit::new("Zm8=".as_bytes(), setup_config_for_decode_base64());
+        let result = t_unit.translate();
+        assert_eq!(result, Ok(()));
+        assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
+                   "fo");
+    }
+
+    #[cfg_attr(not(feature = "dox"), test)]
+    fn test_translation_unit_decode_base64_foo() {
+        let mut t_unit = TranslationUnit::new("Zm9v".as_bytes(), setup_config_for_decode_base64());
+        let result = t_unit.translate();
+        assert_eq!(result, Ok(()));
+        assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
+                   "foo");
+    }
+    
+    #[cfg_attr(not(feature = "dox"), test)]
+    fn test_translation_unit_decode_base64_foob() {
+        let mut t_unit = TranslationUnit::new("Zm9vYg==".as_bytes(), setup_config_for_decode_base64());
+        let result = t_unit.translate();
+        assert_eq!(result, Ok(()));
+        assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
+                   "foob");
+    }
+
+    #[cfg_attr(not(feature = "dox"), test)]
+    fn test_translation_unit_decode_base64_fooba() {
+        let mut t_unit = TranslationUnit::new("Zm9vYmE=".as_bytes(), setup_config_for_decode_base64());
+        let result = t_unit.translate();
+        assert_eq!(result, Ok(()));
+        assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
+                   "fooba");
+    }
+
+    #[cfg_attr(not(feature = "dox"), test)]
+    fn test_translation_unit_decode_base64_foobar() {
+        let mut t_unit = TranslationUnit::new("Zm9vYmFy".as_bytes(), setup_config_for_decode_base64());
+        let result = t_unit.translate();
+        assert_eq!(result, Ok(()));
+        assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
+                   "foobar");
+    }
+}
+
+
