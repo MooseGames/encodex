@@ -17,14 +17,36 @@ mod input;
 
 use std::process;
 
+use encodex::{EncodeMode, TranslationUnit};
+
 fn main() {
-    let settings = crate::args::parse_terminal_args();
-    let settings = match settings {
-        Ok(settings) => { settings }
+    let result = crate::args::parse_terminal_args();
+    let (mut input, config) = match result {
+        Ok((input, config)) => { (input, config) }
         Err(error_message) => {
             eprintln!("{}", error_message);
             process::exit(1);
         }
     };
+
+    let mut data = input.get_next_data();
+    while data != None {
+        let bytes = data.unwrap();
+        let mut translation_unit = TranslationUnit::new(bytes.as_bytes(), config);
+        if let Err(error_message) = translation_unit.translate() {
+            eprintln!("{}", error_message);
+            process::exit(1);
+        }
+        match config.encode_mode() {
+            EncodeMode::Decode => { println!("{}", std::str::from_utf8(&translation_unit
+                                                   .get_decoded_data().as_ref().unwrap())
+                                                   .unwrap()); }
+            EncodeMode::Encode => { println!("{}", std::str::from_utf8(&translation_unit
+                                                   .get_encoded_data().as_ref().unwrap())
+                                                   .unwrap()); }
+        }
+
+        data = input.get_next_data();
+    }
 }
 

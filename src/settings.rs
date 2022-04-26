@@ -34,6 +34,7 @@ pub enum ReadMode {
     StdIn,
 }
 
+#[derive(Clone, Copy)]
 pub struct Settings {
     base: Base,
     encode_mode: EncodeMode,

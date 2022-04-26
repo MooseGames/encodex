@@ -105,7 +105,7 @@ fn handle_input(input: &mut Input, value: &str, working_dir: &path::PathBuf, set
             input.add_file(file_path);
         }
         ReadMode::StdIn => {
-            input.add_string(String::from(value));
+            input.add_data(String::from(value));
         }
     }
 }
@@ -118,9 +118,10 @@ fn print_help() {
     println!("  empty will be interpreted as a file name to be encoded/decoded. '--' without any");
     println!("  suffix switches between file input and stdin.\n");
     println!("Options:");
-    println!("  -{}, --{} <base>      Set encoding to: Base64(todo), Base64url(todo), Base32(todo)",
+    println!("  -{}, --{} <base>      Set encoding to: Base64(todo: encoding), Base64url(todo),",
              OP_BASE, OP_BASE_LONG);
-    println!("                         Base32hex(todo), Base16(todo). Default is 'Guess Base'.");
+    println!("                         Base32(todo), Base32hex(todo), Base16(todo). Default is");
+    println!("                         'Guess Base'.");
     println!("  -{}, --{}           Decode input",
              OP_DECODE, OP_DECODE_LONG);
     println!("  -{}, --{} [<file>]    Save encoded or decoded output to file(todo)",
