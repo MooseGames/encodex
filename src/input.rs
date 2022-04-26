@@ -12,9 +12,23 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-mod base_encoding;
-mod settings;
+use std::path;
 
-pub use settings::Settings;
-pub use settings::{Base, EncodeMode, ReadMode};
+pub struct Input {
+    files: Vec<path::PathBuf>,
+    strings: Vec<String>,
+}
+
+impl Input {
+    pub fn new() -> Input {
+        Input {
+            files: Vec::new(),
+            strings: Vec::new(),
+        }
+    }
+
+    pub fn add_file(&mut self, file_path: path::PathBuf) { self.files.push(file_path); }
+
+    pub fn add_string(&mut self, string: String) { self.strings.push(string); }
+}
 

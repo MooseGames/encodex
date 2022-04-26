@@ -12,10 +12,13 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+mod args;
+mod input;
+
 use std::process;
 
 fn main() {
-    let settings = encodex::parse_terminal_args();
+    let settings = crate::args::parse_terminal_args();
     let settings = match settings {
         Ok(settings) => { settings }
         Err(error_message) => {
@@ -24,5 +27,4 @@ fn main() {
         }
     };
 }
-
 
