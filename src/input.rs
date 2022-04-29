@@ -22,8 +22,8 @@ pub enum ReadMode {
 
 pub struct Input {
     files: Vec<path::PathBuf>,
-    strings: Vec<String>,
     read_mode: ReadMode,
+    strings: Vec<String>,
 }
 
 impl Input {
@@ -47,5 +47,9 @@ impl Input {
             ReadMode::StdIn => { self.read_mode = ReadMode::FileName; }
         }
     }
+
+    pub fn get_next_file(&mut self) -> Option<path::PathBuf> { self.files.pop() }
+
+    pub fn get_next_string(&mut self) -> Option<String> { self.strings.pop() }
 }
 

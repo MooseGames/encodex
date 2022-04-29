@@ -28,6 +28,14 @@ pub enum EncodeMode {
     Encode,
 }
 
+#[derive(Clone, Copy)]
+pub enum ReadMode {
+    FileName,
+    StdIn,
+}
+
+#[derive(Clone, Copy)]
+
 pub struct Settings {
     base: Base,
     encode_mode: EncodeMode,

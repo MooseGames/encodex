@@ -15,6 +15,6 @@
 mod base_encoding;
 mod settings;
 
-pub use settings::Settings;
-pub use settings::{Base, EncodeMode};
+pub use base_encoding::TranslationUnit;
+pub use settings::{Base, EncodeMode, ReadMode, Settings};
 
