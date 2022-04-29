@@ -31,6 +31,7 @@ fn main() {
 
     let mut data = input.get_next_data();
     while data != None {
+        println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
         let bytes = data.unwrap();
         let mut translation_unit = TranslationUnit::new(bytes.as_bytes(), config);
         if let Err(error_message) = translation_unit.translate() {

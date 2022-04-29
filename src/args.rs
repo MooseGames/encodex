@@ -21,8 +21,6 @@ const OP_BASE: &str = "b";
 const OP_BASE_LONG: &str = "base";
 const OP_DECODE: &str = "d";
 const OP_DECODE_LONG: &str = "decode";
-const OP_FILE: &str = "f";
-const OP_FILE_LONG: &str = "file";
 const OP_HELP_LONG: &str = "help";
 const OP_VERSION_LONG: &str = "version";
 
@@ -40,10 +38,10 @@ pub fn parse_terminal_args() -> Result<(Input, Settings), String> {
         let arg = arg_opt.unwrap();
         let cmd_line_op;
         let current_value: &str;
-        if arg.len() >= 2 && "--" == &arg[0..2] {
+        if arg.len() >= 2 && arg.is_ascii() && "--" == &arg[0..2] {
             cmd_line_op = true;
             current_value = &arg[2..];
-        } else if arg.len() >= 1 && "-" == &arg[0..1] {
+        } else if arg.len() >= 1 && arg.is_ascii() && "-" == &arg[0..1] {
             cmd_line_op = true;
             current_value = &arg[1..];
         } else {
@@ -58,10 +56,7 @@ pub fn parse_terminal_args() -> Result<(Input, Settings), String> {
                 }
             }
             OP_DECODE_LONG | OP_DECODE => { switch_encode_mode(&mut settings); }
-            OP_FILE_LONG | OP_FILE => {
-                todo!("!!! Output to file is not yet implemented! Output will be printed to stdout!!!");
-            }
-            "help" => { print_help(); process::exit(0); }
+            OP_HELP_LONG => { print_help(); process::exit(0); }
             OP_VERSION_LONG => { print_version(); process::exit(0); }
             "" => { switch_read_mode(&mut settings); }
             &_ if !cmd_line_op => {
@@ -111,21 +106,18 @@ fn handle_input(input: &mut Input, value: &str, working_dir: &path::PathBuf, set
 }
 
 fn print_help() {
-    println!("Usage: encodex [options] <file>...");
+    println!("Usage: encodex [options] <file>... (todo)");
     println!("       encodex [options] -- <stdin>...");
     println!("  The default of the program is encoding input and printing it to stdout.");
     println!("  Every command line argument that is not prefixed with '-' or '--' and is not");
     println!("  empty will be interpreted as a file name to be encoded/decoded. '--' without any");
     println!("  suffix switches between file input and stdin.\n");
     println!("Options:");
-    println!("  -{}, --{} <base>      Set encoding to: Base64(todo: encoding), Base64url(todo),",
+    println!("  -{}, --{} <base>      Set encoding to: Base64, Base64url, Base32(todo),",
              OP_BASE, OP_BASE_LONG);
-    println!("                         Base32(todo), Base32hex(todo), Base16(todo). Default is");
-    println!("                         'Guess Base'.");
+    println!("                         Base32hex(todo), Base16(todo). Default is 'Guess Base' (todo).");
     println!("  -{}, --{}           Decode input",
              OP_DECODE, OP_DECODE_LONG);
-    println!("  -{}, --{} [<file>]    Save encoded or decoded output to file(todo)",
-             OP_FILE, OP_FILE_LONG);
     println!("      --{}             Print this help and exit", OP_HELP_LONG);
     println!("      --{}          Print version and license information and exit\n",
              OP_VERSION_LONG);
