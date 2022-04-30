@@ -1,14 +1,14 @@
 [package]
 # General package information
 name = "encodex"
-version = "0.1.6"
+version = "0.1.7"
 description = "Encoder and Decoder for Base64, Base64url, Base32, Base32hex and Base16 encodings as defined in RFC 4648."
 edition = "2021"
 
 # Package information relevant for publishing the crate to crates.io
 publish = ["crates-io"]
 authors = ["Fabian Moos <fabian.moos@moosegamesdev.org>"]
-homepage = "https://www.moosegamesdev.org"
+homepage = "https://github.com/MooseGames/encodex.git"
 license = "GPL-3.0-or-later"
 readme = "README.md"
 
