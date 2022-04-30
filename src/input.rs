@@ -2,17 +2,18 @@
  * This file is part of encodex.
  *
  * encodex is free software: you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License version 3 as published by the Free Software Foundation.
+ * General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- * encodex is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * encodex is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License along with encodex.
- * If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with encodex. If not,
+ * see <https://www.gnu.org/licenses/>.
  */
 
-use std::path;
+use std::{fs, io, path};
 
 #[derive(Clone, Copy)]
 pub enum ReadMode {
@@ -21,23 +22,42 @@ pub enum ReadMode {
 }
 
 pub struct Input {
-    files: Vec<path::PathBuf>,
+    byte_streams: Vec<Vec<u8>>,
     read_mode: ReadMode,
-    strings: Vec<String>,
 }
 
 impl Input {
     pub fn new() -> Input {
         Input {
-            files: Vec::new(),
-            strings: Vec::new(),
+            byte_streams: Vec::new(),
             read_mode: ReadMode::FileName,
         }
     }
 
-    pub fn add_file(&mut self, file_path: path::PathBuf) { self.files.push(file_path); }
+    pub fn add_file(&mut self, file_path: path::PathBuf) {
+        match fs::read(file_path.clone()) {
+            Ok(bytes) => { self.byte_streams.push(bytes); }
+            Err(error) => {
+                match error.kind() {
+                    io::ErrorKind::NotFound => {
+                        eprintln!("Could not open file '{}' Not Found!",
+                                  file_path.to_str().unwrap());
+                    }
+                    io::ErrorKind::PermissionDenied => {
+                        eprintln!("Could not open file '{}' Permission denied!",
+                                 file_path.to_str().unwrap());
+                    }
+                    _ => {
+                        eprintln!("Could not open file '{}'!", file_path.to_str().unwrap());
+                    }
+                }
+            }
+        }
+    }
 
-    pub fn add_string(&mut self, string: String) { self.strings.push(string); }
+    pub fn add_string_as_byte_stream(&mut self, string: String) {
+        self.byte_streams.push(string.into_bytes());
+    }
 
     pub fn read_mode(&self) -> ReadMode { self.read_mode }
 
@@ -48,8 +68,6 @@ impl Input {
         }
     }
 
-    pub fn get_next_file(&mut self) -> Option<path::PathBuf> { self.files.pop() }
-
-    pub fn get_next_string(&mut self) -> Option<String> { self.strings.pop() }
+    pub fn get_next_byte_stream(&mut self) -> Option<Vec<u8>> { self.byte_streams.pop() }
 }
 

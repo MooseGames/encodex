@@ -2,15 +2,18 @@
  * This file is part of encodex.
  *
  * encodex is free software: you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License version 3 as published by the Free Software Foundation.
+ * General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- * encodex is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * encodex is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License along with encodex.
- * If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with encodex. If not,
+ * see <https://www.gnu.org/licenses/>.
  */
+
+//! Functions for en-/decoding of different [base](crate::Base) types.
 
 use std::collections::HashMap;
 
@@ -19,6 +22,7 @@ use crate::settings::{Base, EncodeMode, Settings};
 /// Creates a [HashMap](std::collections::HashMap).
 /// 
 /// # Usage Example
+///
 /// The map is created from a list of n-tuples. The first element of the tuple is the key, the
 /// second element is the value. Handing a 1-tuple to the macro is an error and will deny
 /// compilation. If more than two elements are supplied as a tuple, every tuple-element with an
@@ -46,23 +50,7 @@ macro_rules! map {
     };
 }
 
-/// A unit for en- or decoding a byte ström.
-///
-/// Currently it is assumed that the encoded byte ström is in the correct format to be processed by
-/// the translate function.
-///
-/// # Usage Example
-/// ```
-/// let mut config = encodex::Settings::new();
-/// config.set_base(encodex::Base::Base64);
-/// config.set_encode_mode(encodex::EncodeMode::Decode);
-///
-/// let mut unit = encodex::TranslationUnit::new("d2FpZnU=".as_bytes(), config);
-/// let result = unit.translate();
-///
-/// assert_eq!(result, Ok(()));
-/// assert_eq!(std::str::from_utf8(&unit.get_decoded_data().as_ref().unwrap()).unwrap(), "waifu");
-/// ```
+/// A unit for en- or decoding a byte vector.
 pub struct TranslationUnit {
     decoded_data: Option<Vec<u8>>,
     encoded_data: Option<Vec<u8>>,
@@ -70,28 +58,41 @@ pub struct TranslationUnit {
 }
 
 impl TranslationUnit {
-    /// Returns the decoded arbitrary byte data.
+    /// Returns the [`Base`](crate::Base) the [`TranslationUnit`] used for de-/encoding.
+    pub fn base(&self) -> Base { self.config.base() }
+
+    /// Returns the [`EncodeMode`](crate::EncodeMode) of the [`TranslationUnit`].
+    pub fn encode_mode(&self) -> EncodeMode { self.config.encode_mode() }
+
+    /// Returns the decoded byte vector.
     pub fn get_decoded_data(&self) -> &Option<Vec<u8>> { &self.decoded_data }
 
-    /// Returns the encoded data.
+    /// Returns the encoded byte vector.
     ///
     /// Every byte in the returned [`Vec`](std::vec::Vec) corresponds to a char of the
     /// alphabet as defined by the [`Base`](crate::Base) of this translation unit's
     /// [config field](crate::Settings).
     pub fn get_encoded_data(&self) -> &Option<Vec<u8>> { &self.encoded_data }
 
-    pub fn new(data: &[u8], config: Settings) -> TranslationUnit {
+    /// Creates a new [`TranslationUnit`].
+    ///
+    /// The [configuration](crate::Settings) and data of a translation unit can't be changed after
+    /// its creation. The way the data is interpreted depends on the config that has been used to
+    /// create the unit. If it is created for encoding, the data is interpreted as an arbitrary byte
+    /// vector. If it is created for decoding, the data is interpreted as a [`Base`](crate::Base)
+    /// encoded string.
+    pub fn new(data: Vec<u8>, config: Settings) -> TranslationUnit {
         match config.encode_mode() {
             EncodeMode::Decode => {
                 TranslationUnit {
                     decoded_data: None,
-                    encoded_data: Some(data.to_vec()),
+                    encoded_data: Some(data),
                     config,
                 }
             }
             EncodeMode::Encode => {
                 TranslationUnit {
-                    decoded_data: Some(data.to_vec()),
+                    decoded_data: Some(data),
                     encoded_data: None,
                     config,
                 }
@@ -99,6 +100,10 @@ impl TranslationUnit {
         }
     }
 
+    /// Translates the data of the [`TranslationUnit`].
+    ///
+    /// This function translates the data when it is called for the first time. When called a more
+    /// than once it does nothing.
     pub fn translate(&mut self) -> Result<(), String> {
         match self.config.encode_mode() {
             EncodeMode::Decode => {
@@ -112,6 +117,8 @@ impl TranslationUnit {
         }
     }
 
+    /// Dispatches the decoding process to the correct decode function. The decode function that is
+    /// used depends on the [`Base`](crate::Base) value of the [config](crate::Settings) field.
     fn decode_dispatch(&mut self) -> Result<(), String> {
         match self.config.base() {
             Base::Guess => { todo!("Guess Base decoding is not yet implemented!"); }
@@ -122,6 +129,8 @@ impl TranslationUnit {
         }
     }
 
+    /// Dispatches the decoding process to the correct encode function. The encode function that is
+    /// used depends on the [`Base`](crate::Base) value of the [config](crate::Settings) field.
     fn encode_dispatch(&mut self) -> Result<(), String> {
         match self.config.base() {
             Base::Guess => { todo!("Guess Base encoding is not yet implemented!"); }
@@ -132,6 +141,8 @@ impl TranslationUnit {
         }
     }
 
+    /// Decodes a [`String`](std::string::String) that is encoded as [`Base64`](crate::Base::Base64)
+    /// or [`Base64url`](crate::Base::Base64url).
     fn from_base64(&mut self) -> Result<(), String> {
         let alphabet: HashMap<char, u32> = match self.config.base() {
             Base::Base64 => {
@@ -234,6 +245,8 @@ impl TranslationUnit {
         Ok(())
     }
 
+    /// Encodes an arbitrary byte vector as [`Base64`](crate::Base::Base64) or
+    /// [`Base64url`](crate::Base::Base64url) [`String`](std::string::String).
     fn to_base64(&mut self) -> Result<(), String> {
         let alphabet: Vec<char> = match self.config.base() {
             Base::Base64 => {
@@ -304,8 +317,9 @@ impl TranslationUnit {
     }
 }
 
+/// Test vectors for different encodings.
 #[cfg(any(test, feature = "doc_tests"))]
-mod test {
+mod tests {
     use super::*;
 
     fn setup_config_for_decode_base64() -> Settings {
@@ -342,7 +356,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_decode_base64() {
-        let mut t_unit = TranslationUnit::new("".as_bytes(), setup_config_for_decode_base64());
+        let mut t_unit = TranslationUnit::new(String::from("").into_bytes(),
+                                              setup_config_for_decode_base64());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
@@ -351,7 +366,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_decode_base64_f() {
-        let mut t_unit = TranslationUnit::new("Zg==".as_bytes(), setup_config_for_decode_base64());
+        let mut t_unit = TranslationUnit::new(String::from("Zg==").into_bytes(),
+                                              setup_config_for_decode_base64());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
@@ -360,7 +376,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_decode_base64_fo() {
-        let mut t_unit = TranslationUnit::new("Zm8=".as_bytes(), setup_config_for_decode_base64());
+        let mut t_unit = TranslationUnit::new(String::from("Zm8=").into_bytes(),
+                                              setup_config_for_decode_base64());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
@@ -369,7 +386,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_decode_base64_foo() {
-        let mut t_unit = TranslationUnit::new("Zm9v".as_bytes(), setup_config_for_decode_base64());
+        let mut t_unit = TranslationUnit::new(String::from("Zm9v").into_bytes(),
+                                              setup_config_for_decode_base64());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
@@ -378,7 +396,8 @@ mod test {
     
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_decode_base64_foob() {
-        let mut t_unit = TranslationUnit::new("Zm9vYg==".as_bytes(), setup_config_for_decode_base64());
+        let mut t_unit = TranslationUnit::new(String::from("Zm9vYg==").into_bytes(),
+                                              setup_config_for_decode_base64());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
@@ -387,7 +406,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_decode_base64_fooba() {
-        let mut t_unit = TranslationUnit::new("Zm9vYmE=".as_bytes(), setup_config_for_decode_base64());
+        let mut t_unit = TranslationUnit::new(String::from("Zm9vYmE=").into_bytes(),
+                                              setup_config_for_decode_base64());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
@@ -396,7 +416,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_decode_base64_foobar() {
-        let mut t_unit = TranslationUnit::new("Zm9vYmFy".as_bytes(), setup_config_for_decode_base64());
+        let mut t_unit = TranslationUnit::new(String::from("Zm9vYmFy").into_bytes(),
+                                              setup_config_for_decode_base64());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
@@ -405,7 +426,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_decode_base64_foobar_mima() {
-        let mut t_unit = TranslationUnit::new("44G/44G+".as_bytes(), setup_config_for_decode_base64());
+        let mut t_unit = TranslationUnit::new(String::from("44G/44G+").into_bytes(),
+                                              setup_config_for_decode_base64());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
@@ -418,7 +440,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_encode_base64() {
-        let mut t_unit = TranslationUnit::new("".as_bytes(), setup_config_for_encode_base64());
+        let mut t_unit = TranslationUnit::new(String::from("").into_bytes(),
+                                              setup_config_for_encode_base64());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_encoded_data().as_ref().unwrap()).unwrap(),
@@ -427,7 +450,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_encode_base64_f() {
-        let mut t_unit = TranslationUnit::new("f".as_bytes(), setup_config_for_encode_base64());
+        let mut t_unit = TranslationUnit::new(String::from("f").into_bytes(),
+                                              setup_config_for_encode_base64());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_encoded_data().as_ref().unwrap()).unwrap(),
@@ -436,7 +460,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_encode_base64_fo() {
-        let mut t_unit = TranslationUnit::new("fo".as_bytes(), setup_config_for_encode_base64());
+        let mut t_unit = TranslationUnit::new(String::from("fo").into_bytes(),
+                                              setup_config_for_encode_base64());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_encoded_data().as_ref().unwrap()).unwrap(),
@@ -445,7 +470,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_encode_base64_foo() {
-        let mut t_unit = TranslationUnit::new("foo".as_bytes(), setup_config_for_encode_base64());
+        let mut t_unit = TranslationUnit::new(String::from("foo").into_bytes(),
+                                              setup_config_for_encode_base64());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_encoded_data().as_ref().unwrap()).unwrap(),
@@ -454,7 +480,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_encode_base64_foob() {
-        let mut t_unit = TranslationUnit::new("foob".as_bytes(), setup_config_for_encode_base64());
+        let mut t_unit = TranslationUnit::new(String::from("foob").into_bytes(),
+                                              setup_config_for_encode_base64());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_encoded_data().as_ref().unwrap()).unwrap(),
@@ -463,7 +490,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_encode_base64_fooba() {
-        let mut t_unit = TranslationUnit::new("fooba".as_bytes(), setup_config_for_encode_base64());
+        let mut t_unit = TranslationUnit::new(String::from("fooba").into_bytes(),
+                                              setup_config_for_encode_base64());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_encoded_data().as_ref().unwrap()).unwrap(),
@@ -472,7 +500,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_encode_base64_foobar() {
-        let mut t_unit = TranslationUnit::new("foobar".as_bytes(), setup_config_for_encode_base64());
+        let mut t_unit = TranslationUnit::new(String::from("foobar").into_bytes(),
+                                              setup_config_for_encode_base64());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_encoded_data().as_ref().unwrap()).unwrap(),
@@ -481,7 +510,8 @@ mod test {
     
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_encode_base64_foobar_mima() {
-        let mut t_unit = TranslationUnit::new("みま".as_bytes(), setup_config_for_encode_base64());
+        let mut t_unit = TranslationUnit::new(String::from("みま").into_bytes(),
+                                              setup_config_for_encode_base64());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_encoded_data().as_ref().unwrap()).unwrap(),
@@ -494,7 +524,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_decode_base64url() {
-        let mut t_unit = TranslationUnit::new("".as_bytes(), setup_config_for_decode_base64url());
+        let mut t_unit = TranslationUnit::new(String::from("").into_bytes(),
+                                              setup_config_for_decode_base64url());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
@@ -503,7 +534,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_decode_base64url_f() {
-        let mut t_unit = TranslationUnit::new("Zg==".as_bytes(), setup_config_for_decode_base64url());
+        let mut t_unit = TranslationUnit::new(String::from("Zg==").into_bytes(),
+                                              setup_config_for_decode_base64url());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
@@ -512,7 +544,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_decode_base64url_fo() {
-        let mut t_unit = TranslationUnit::new("Zm8=".as_bytes(), setup_config_for_decode_base64url());
+        let mut t_unit = TranslationUnit::new(String::from("Zm8=").into_bytes(),
+                                              setup_config_for_decode_base64url());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
@@ -521,7 +554,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_decode_base64url_foo() {
-        let mut t_unit = TranslationUnit::new("Zm9v".as_bytes(), setup_config_for_decode_base64url());
+        let mut t_unit = TranslationUnit::new(String::from("Zm9v").into_bytes(),
+                                              setup_config_for_decode_base64url());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
@@ -530,7 +564,8 @@ mod test {
     
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_decode_base64url_foob() {
-        let mut t_unit = TranslationUnit::new("Zm9vYg==".as_bytes(), setup_config_for_decode_base64url());
+        let mut t_unit = TranslationUnit::new(String::from("Zm9vYg==").into_bytes(),
+                                              setup_config_for_decode_base64url());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
@@ -539,7 +574,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_decode_base64url_fooba() {
-        let mut t_unit = TranslationUnit::new("Zm9vYmE=".as_bytes(), setup_config_for_decode_base64url());
+        let mut t_unit = TranslationUnit::new(String::from("Zm9vYmE=").into_bytes(),
+                                              setup_config_for_decode_base64url());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
@@ -548,7 +584,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_decode_base64url_foobar() {
-        let mut t_unit = TranslationUnit::new("Zm9vYmFy".as_bytes(), setup_config_for_decode_base64url());
+        let mut t_unit = TranslationUnit::new(String::from("Zm9vYmFy").into_bytes(),
+                                              setup_config_for_decode_base64url());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
@@ -557,7 +594,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_decode_base64url_foobar_mima() {
-        let mut t_unit = TranslationUnit::new("44G_44G-".as_bytes(), setup_config_for_decode_base64url());
+        let mut t_unit = TranslationUnit::new(String::from("44G_44G-").into_bytes(),
+                                              setup_config_for_decode_base64url());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_decoded_data().as_ref().unwrap()).unwrap(),
@@ -570,7 +608,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_encode_base64url() {
-        let mut t_unit = TranslationUnit::new("".as_bytes(), setup_config_for_encode_base64url());
+        let mut t_unit = TranslationUnit::new(String::from("").into_bytes(),
+                                              setup_config_for_encode_base64url());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_encoded_data().as_ref().unwrap()).unwrap(),
@@ -579,7 +618,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_encode_base64url_f() {
-        let mut t_unit = TranslationUnit::new("f".as_bytes(), setup_config_for_encode_base64url());
+        let mut t_unit = TranslationUnit::new(String::from("f").into_bytes(),
+                                              setup_config_for_encode_base64url());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_encoded_data().as_ref().unwrap()).unwrap(),
@@ -588,7 +628,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_encode_base64url_fo() {
-        let mut t_unit = TranslationUnit::new("fo".as_bytes(), setup_config_for_encode_base64url());
+        let mut t_unit = TranslationUnit::new(String::from("fo").into_bytes(),
+                                              setup_config_for_encode_base64url());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_encoded_data().as_ref().unwrap()).unwrap(),
@@ -597,7 +638,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_encode_base64url_foo() {
-        let mut t_unit = TranslationUnit::new("foo".as_bytes(), setup_config_for_encode_base64url());
+        let mut t_unit = TranslationUnit::new(String::from("foo").into_bytes(),
+                                              setup_config_for_encode_base64url());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_encoded_data().as_ref().unwrap()).unwrap(),
@@ -606,7 +648,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_encode_base64url_foob() {
-        let mut t_unit = TranslationUnit::new("foob".as_bytes(), setup_config_for_encode_base64url());
+        let mut t_unit = TranslationUnit::new(String::from("foob").into_bytes(),
+                                              setup_config_for_encode_base64url());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_encoded_data().as_ref().unwrap()).unwrap(),
@@ -615,7 +658,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_encode_base64url_fooba() {
-        let mut t_unit = TranslationUnit::new("fooba".as_bytes(), setup_config_for_encode_base64url());
+        let mut t_unit = TranslationUnit::new(String::from("fooba").into_bytes(),
+                                              setup_config_for_encode_base64url());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_encoded_data().as_ref().unwrap()).unwrap(),
@@ -624,7 +668,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_encode_base64url_foobar() {
-        let mut t_unit = TranslationUnit::new("foobar".as_bytes(), setup_config_for_encode_base64url());
+        let mut t_unit = TranslationUnit::new(String::from("foobar").into_bytes(),
+                                              setup_config_for_encode_base64url());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_encoded_data().as_ref().unwrap()).unwrap(),
@@ -633,7 +678,8 @@ mod test {
 
     #[cfg_attr(not(feature = "doc_tests"), test)]
     fn test_translation_unit_encode_base64url_foobar_mima() {
-        let mut t_unit = TranslationUnit::new("みま".as_bytes(), setup_config_for_encode_base64url());
+        let mut t_unit = TranslationUnit::new(String::from("みま").into_bytes(),
+                                              setup_config_for_encode_base64url());
         let result = t_unit.translate();
         assert_eq!(result, Ok(()));
         assert_eq!(std::str::from_utf8(&t_unit.get_encoded_data().as_ref().unwrap()).unwrap(),

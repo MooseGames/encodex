@@ -2,7 +2,8 @@
 
 A command line tool and library for decoding and encoding data as `Base64`, `Base64url`,
 `Base32`(todo), `Base32hex`(todo) and `Base16`(todo) encodings as defined in _**RFC 4648**_. For
-information about how to use this program please use `cargo doc` from within your project folder.
+information about how to use the library crate please use `cargo doc` from within your project
+folder.
 
 ---
 ## Todo
@@ -14,17 +15,15 @@ information about how to use this program please use `cargo doc` from within you
 - Option for ignoring non-alphabet characters in base encoded data? (_**RFC 4648** - 3.3_)
 - Option to change used alphabet for specific uses (_**RFC 4648** - 3.4_)
 - Implement `Base32hex` en- and decoding
-- Option to choose between upper- and lowercase for `Base32` and `Base32hex`.
+- Option to choose between upper- and lowercase for `Base32`, `Base32hex` and `Base16`.
 - Implement test vectors:
-    * `Base64` (_from **RFC 4648** - 10_)
-    * `Base64url`
     * `Base32` (_from **RFC 4648** - 10_)
     * `Base32hex` (_from **RFC 4648** - 10_)
     * `Base16` (_from **RFC 4648** - 10_)
 ---
 ###### License
-This program is released unter the _GNU Lesser General Public License_. See _[COPYING](./COPYING)_
-and _[COPYING.LESSER](./COPYING.LESSER)_ for additional information about the license.
+This program is released unter the _GNU General Public License_. See _[COPYING](./COPYING)_ for
+additional information about the license.
 
 ###### Contact
 For any other question contact me at

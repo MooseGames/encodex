@@ -2,14 +2,15 @@
  * This file is part of encodex.
  *
  * encodex is free software: you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License version 3 as published by the Free Software Foundation.
+ * General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- * encodex is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * encodex is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License along with encodex.
- * If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with encodex. If not,
+ * see <https://www.gnu.org/licenses/>.
  */
 
 use std::{env, path, process};
@@ -36,30 +37,40 @@ pub fn parse_terminal_args() -> Result<(Input, Settings), String> {
 
     while arg_opt != None {
         let arg = arg_opt.unwrap();
-        let cmd_line_op;
+        let long_cmd_line_op;
+        let short_cmd_line_op;
         let current_value: &str;
         if arg.len() >= 2 && arg.is_ascii() && "--" == &arg[0..2] {
-            cmd_line_op = true;
+            long_cmd_line_op = true;
+            short_cmd_line_op = false;
             current_value = &arg[2..];
         } else if arg.len() >= 1 && arg.is_ascii() && "-" == &arg[0..1] {
-            cmd_line_op = true;
+            long_cmd_line_op = false;
+            short_cmd_line_op = true;
             current_value = &arg[1..];
         } else {
-            cmd_line_op = false;
+            long_cmd_line_op = false;
+            short_cmd_line_op = false;
             current_value = &arg[..];
         }
 
         match current_value {
-            OP_BASE_LONG | OP_BASE => {
+            OP_BASE_LONG if long_cmd_line_op => {
                 if let Err(error_message) = handle_base_type(&mut settings, arg_it.next()) {
                     return Err(String::from(error_message));
                 }
             }
-            OP_DECODE_LONG | OP_DECODE => { switch_encode_mode(&mut settings); }
-            OP_HELP_LONG => { print_help(); process::exit(0); }
-            OP_VERSION_LONG => { print_version(); process::exit(0); }
+            OP_BASE if short_cmd_line_op => {
+                if let Err(error_message) = handle_base_type(&mut settings, arg_it.next()) {
+                    return Err(String::from(error_message));
+                }
+            }
+            OP_DECODE_LONG if long_cmd_line_op => { switch_encode_mode(&mut settings); }
+            OP_DECODE if short_cmd_line_op => { switch_encode_mode(&mut settings); }
+            OP_HELP_LONG if long_cmd_line_op => { print_help(); process::exit(0); }
+            OP_VERSION_LONG if long_cmd_line_op => { print_version(); process::exit(0); }
             "" => { input.switch_read_mode(); }
-            &_ if !cmd_line_op => {
+            &_ if !long_cmd_line_op && !short_cmd_line_op => {
                 handle_input(&mut input, current_value, &working_dir);
             }
             &_ => {
@@ -100,13 +111,13 @@ fn handle_input(input: &mut Input, value: &str, working_dir: &path::PathBuf) {
             input.add_file(file_path);
         }
         ReadMode::StdIn => {
-            input.add_string(String::from(value));
+            input.add_string_as_byte_stream(String::from(value));
         }
     }
 }
 
 fn print_help() {
-    println!("Usage: encodex [options] <file>... (todo)");
+    println!("Usage: encodex [options] <file>...");
     println!("       encodex [options] -- <stdin>...");
     println!("  The default of the program is encoding input and printing it to stdout.");
     println!("  Every command line argument that is not prefixed with '-' or '--' and is not");
@@ -127,26 +138,27 @@ fn print_help() {
 }
 
 fn print_version() {
+    let program_name = String::from(env!("CARGO_PKG_NAME"));
     let mut version = String::from(env!("CARGO_PKG_VERSION_MAJOR"));
     version.push_str(".");
     version.push_str(env!("CARGO_PKG_VERSION_MINOR"));
     version.push_str(".");
     version.push_str(env!("CARGO_PKG_VERSION_PATCH"));
     let description = String::from(env!("CARGO_PKG_DESCRIPTION"));
-    println!("encodex {}  {}\n\
+    println!("{} {}  {}\n\
               {}\n\
               Copyright (C) 2022  Fabian Moos\n\n\
               This program is free software: you can redistribute it and/or modify\n\
-              it under the terms of the GNU Lesser General Public License as\n\
-              published by the Free Software Foundation, either version 3 of the\n\
-              License, or (at your option) any later version.\n\n\
+              it under the terms of the GNU General Public License as published by\n\
+              the Free Software Foundation, either version 3 of the License, or\n\
+              (at your option) any later version.\n\n\
               This program is distributed in the hope that it will be useful,\n\
               but WITHOUT ANY WARRANTY; without even the implied warranty of\n\
               MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n\
-              GNU Lesser General Public License for more details.\n\n\
+              GNU General Public License for more details.\n\n\
               You should have received a copy of the GNU General Public License\n\
               along with this program.  If not, see <https://www.gnu.org/licenses/>.",
-              version, &description[..51], &description[51..]);
+              program_name, version, &description[..51], &description[51..]);
 }
 
 fn switch_encode_mode(settings: &mut Settings) {

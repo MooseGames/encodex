@@ -2,14 +2,15 @@
  * This file is part of encodex.
  *
  * encodex is free software: you can redistribute it and/or modify it under the terms of the GNU
- * Lesser General Public License version 3 as published by the Free Software Foundation.
+ * General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- * encodex is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
- * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * encodex is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License along with encodex.
- * If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with encodex. If not,
+ * see <https://www.gnu.org/licenses/>.
  */
 
 mod args;
@@ -29,11 +30,10 @@ fn main() {
         }
     };
 
-    let mut data = input.get_next_string();
+    let mut data = input.get_next_byte_stream();
     while data != None {
-        println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
         let bytes = data.unwrap();
-        let mut translation_unit = TranslationUnit::new(bytes.as_bytes(), config);
+        let mut translation_unit = TranslationUnit::new(bytes, config);
         if let Err(error_message) = translation_unit.translate() {
             eprintln!("{}", error_message);
             process::exit(1);
@@ -47,7 +47,7 @@ fn main() {
                                                    .unwrap()); }
         }
 
-        data = input.get_next_string();
+        data = input.get_next_byte_stream();
     }
 }
 
